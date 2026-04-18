@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HelpHub AI | Request Details</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+  <script defer src="./app.js"></script>
+</head>
+
+<body data-page="detail">
+  <!-- Request detail page: show full request, summary, helpers, and actions -->
+  <header class="topbar">
+    <div class="container nav">
+      <a class='brand' href='./index.html'><span class="brand-badge">H</span><span>HelpHub AI</span></a>
+      <nav class="nav-links">
+        <a href='./pages/dashboard/dashboard.html'>Dashboard</a>
+        <a href='./pages/explore/explore.html'>Explore</a>
+        <a href='./pages/leaderBoard/leaderBoard.html'>Leaderboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Request detail header -->
+    <section class="page-hero">
+      <div class="panel dark-panel">
+        <div data-request-meta class="meta-tags"></div>
+        <h1 data-request-title style="font-size: clamp(2rem, 4vw, 3.5rem);"></h1>
+        <p data-request-description></p>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="detail-grid section">
+      <!-- Left Column -->
+      <div class="stack">
+        <!-- AI Summary -->
+        <div class="panel">
+          <p class="section-kicker">AI Summary</p>
+          <h2>What this request needs</h2>
+          <p data-request-summary></p>
+          <div data-request-tags class="tag-row"></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="panel">
+          <p class="section-kicker">Actions</p>
+          <div class="actions-grid">
+            <button data-cta-help class="btn btn-primary">I can help</button>
+            <button data-cta-solved class="btn btn-secondary">Mark as solved</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="stack">
+        <!-- Requester Info -->
+        <div class="panel">
+          <p class="section-kicker">Requester</p>
+          <div data-request-requester></div>
+        </div>
+
+        <!-- Helpers List -->
+        <div class="panel">
+          <p class="section-kicker">Helpers</p>
+          <h2>People ready to support</h2>
+          <div data-helper-list class="stack"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <style>
+    .page-hero {
+      padding: 36px 0 18px;
+    }
+
+    .page-hero .panel {
+      background: linear-gradient(140deg, rgba(20, 29, 32, 0.93), rgba(16, 26, 29, 0.88));
+      color: white;
+      border-radius: 32px;
+      padding: 28px;
+    }
+
+    .page-hero h1 {
+      color: white;
+      margin-bottom: 12px;
+    }
+
+    .page-hero p {
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.7;
+    }
+
+    .meta-tags {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      padding: 24px 0;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .actions-grid {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .user-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      color: white;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #f59e0b, #fb7185);
+    }
+
+    .avatar.teal {
+      background: linear-gradient(135deg, #14b8a6, #0f766e);
+    }
+
+    .avatar.dark {
+      background: linear-gradient(135deg, #2c3e50, #1f2937);
+    }
+
+    .helper-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(17, 33, 29, 0.06);
+    }
+
+    .muted {
+      color: #5f685f;
+      font-size: 0.95rem;
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(15, 118, 110, 0.08);
+      color: #115e59;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .tag.urgent {
+      background: rgba(220, 38, 38, 0.1);
+      color: #dc2626;
+    }
+
+    .tag.success {
+      background: rgba(21, 128, 61, 0.1);
+      color: #15803d;
+    }
+
+    /* Medium screens (tablet) */
+    @media (max-width: 980px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .actions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .actions-grid button {
+        width: 100%;
+      }
+    }
+
+    /* Small screens (mobile) */
+    @media (max-width: 680px) {
+      .page-hero {
+        padding: 24px 0 12px;
+      }
+
+      .page-hero .panel {
+        border-radius: 22px;
+        padding: 22px;
+      }
+
+      .page-hero h1 {
+        font-size: clamp(1.8rem, 5vw, 2.6rem);
+        margin-bottom: 12px;
+      }
+
+      .page-hero p {
+        font-size: 0.95rem;
+      }
+
+      .detail-grid {
+        gap: 16px;
+        padding: 16px 0;
+      }
+
+      .stack {
+        gap: 14px;
+      }
+
+      .meta-tags {
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .tag {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+      }
+
+      .actions-grid {
+        gap: 10px;
+      }
+
+      .actions-grid .btn {
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        width: 100%;
+      }
+
+      .helper-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+
+      .helper-item .user-line {
+        width: 100%;
+      }
+
+      .user-line {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .user-line > div:last-child {
+        text-align: right;
+      }
+
+      .panel {
+        padding: 22px;
+        border-radius: 24px;
+      }
+
+      .panel h2 {
+        font-size: clamp(1.2rem, 3vw, 1.8rem);
+        margin-bottom: 12px;
+      }
+
+      .section-kicker,
+      .eyebrow {
+        font-size: 0.75rem;
+      }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 480px) {
+      .page-hero h1 {
+        font-size: 1.6rem;
+        line-height: 1.2;
+      }
+
+      .meta-tags {
+        gap: 4px;
+      }
+
+      .tag {
+        font-size: 0.8rem;
+        padding: 5px 8px;
+      }
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 0.85rem;
+      }
+
+      .helper-item {
+        padding: 12px 14px;
+      }
+
+      .actions-grid .btn {
+        padding: 11px 14px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</body>
+
+</html>
