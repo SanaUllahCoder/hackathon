@@ -230,6 +230,7 @@ textarea {
 
 .feed-grid {
     grid-template-columns: 0.84fr 1.16fr;
+    align-items: start;
 }
 
 /* -------------------------------------------------------------------------
