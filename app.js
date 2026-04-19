@@ -49,7 +49,6 @@ function seedData() {
       { id: "user-2", name: "Hassan Ali", role: "Can Help", location: "Lahore", interests: ["Web Apps", "Teaching", "Open Source"], skills: ["JavaScript", "React", "Git/GitHub", "Node.js"], trustScore: 88, badges: ["Code Rescuer", "Bug Hunter"], contributions: 24 },
       { id: "user-3", name: "Sara Noor", role: "Need Help", location: "Islamabad", interests: ["Learning", "Data", "Public Speaking"], skills: ["Python", "Data Analysis"], trustScore: 74, badges: ["Community Voice"], contributions: 11 }
     ]);
-    save(STORAGE_KEYS.currentUser, "user-1");
   }
 
   if (!load(STORAGE_KEYS.requests, null)) {
@@ -82,8 +81,20 @@ const getNotifications = () => load(STORAGE_KEYS.notifications, []);
 const getMessages = () => load(STORAGE_KEYS.messages, []);
 function getCurrentUser() {
   const users = getUsers();
-  const id = load(STORAGE_KEYS.currentUser, users[0]?.id);
-  return users.find((user) => user.id === id) || users[0];
+  const id = load(STORAGE_KEYS.currentUser, null);
+  return users.find((user) => user.id === id) || null;
+}
+
+function isUserLoggedIn() {
+  return load(STORAGE_KEYS.currentUser, null) !== null;
+}
+
+function requireLogin() {
+  if (!isUserLoggedIn()) {
+    window.location.href = "../../pages/auth/auth.html";
+    return false;
+  }
+  return true;
 }
 
 function setCurrentUser(id) { save(STORAGE_KEYS.currentUser, id); }
@@ -206,6 +217,7 @@ function renderLanding() {
 // Dashboard page
 // -----------------------------------------------------------------------------
 function renderDashboard() {
+  if (!requireLogin()) return;
   const currentUser = getCurrentUser();
   const users = getUsers();
   const requests = getRequests();
@@ -231,6 +243,7 @@ function renderDashboard() {
 // Explore page: feed discovery and filter controls
 // -----------------------------------------------------------------------------
 function renderExplore() {
+  if (!requireLogin()) return;
   const users = getUsers();
   const requests = getRequests();
   const form = qs("[data-filter-form]");
@@ -257,6 +270,7 @@ function renderExplore() {
 // Create request page: AI-assisted request composition
 // -----------------------------------------------------------------------------
 function renderCreateRequest() {
+  if (!requireLogin()) return;
   const title = qs("#request-title");
   const description = qs("#request-description");
   const category = qs("#request-category");
@@ -311,7 +325,7 @@ function renderCreateRequest() {
     save(STORAGE_KEYS.requests, requests);
     save(STORAGE_KEYS.notifications, notifications);
     showToast("Request created successfully.");
-    window.location.href = `request-detail.html?id=${request.id}`;
+    window.location.href = `../../request-detail.html?id=${request.id}`;
   });
   updateSuggestions();
 }
@@ -320,6 +334,7 @@ function renderCreateRequest() {
 // Request detail page: request metadata, helper actions, and status updates
 // -----------------------------------------------------------------------------
 function renderRequestDetail() {
+  if (!requireLogin()) return;
   const params = new URLSearchParams(window.location.search);
   const requests = getRequests();
   const users = getUsers();
@@ -377,6 +392,7 @@ function renderRequestDetail() {
 // Messages page
 // -----------------------------------------------------------------------------
 function renderMessages() {
+  if (!requireLogin()) return;
   const messages = getMessages();
   const list = qs("[data-message-list]");
   const paint = () => { list.innerHTML = messages.map((message) => `<div class="message-item"><div><strong>${message.from} → ${message.to}</strong><p>${message.text}</p></div><span class="tag">${message.time}</span></div>`).join(""); };
@@ -399,6 +415,7 @@ function renderMessages() {
 // Leaderboard page
 // -----------------------------------------------------------------------------
 function renderLeaderboard() {
+  if (!requireLogin()) return;
   const users = [...getUsers()].sort((a, b) => b.trustScore - a.trustScore || b.contributions - a.contributions);
   qs("[data-rank-list]").innerHTML = users.map((user, index) => `
     <div class="rank-item"><div class="user-line"><div class="avatar ${index === 0 ? "teal" : index === 1 ? "dark" : ""}">${initials(user.name)}</div><div><strong>#${index + 1} ${user.name}</strong><p>${user.skills.slice(0, 3).join(", ")}</p></div></div><div class="center"><strong>${user.trustScore}%</strong><p>${user.contributions} contributions</p></div></div>
@@ -412,6 +429,7 @@ function renderLeaderboard() {
 // AI Center page
 // -----------------------------------------------------------------------------
 function renderAiCenter() {
+  if (!requireLogin()) return;
   const requests = getRequests();
   const users = getUsers();
   qs("[data-ai-summary]").innerHTML = `
@@ -428,6 +446,7 @@ function renderAiCenter() {
 // Notifications page
 // -----------------------------------------------------------------------------
 function renderNotifications() {
+  if (!requireLogin()) return;
   const notifications = getNotifications();
   const list = qs("[data-notif-list]");
   const paint = () => {
@@ -449,6 +468,7 @@ function renderNotifications() {
 // Profile page
 // -----------------------------------------------------------------------------
 function renderProfile() {
+  if (!requireLogin()) return;
   const currentUser = getCurrentUser();
   qs("[data-profile-name]").textContent = currentUser.name;
   qs("[data-profile-role]").textContent = currentUser.role;
@@ -492,13 +512,14 @@ function renderAdmin() {
 }
 
 function renderOnboarding() {
+  if (!requireLogin()) return;
   const form = qs("[data-onboarding-form]");
   const output = qs("[data-onboarding-ai]");
   const userSwitch = qs("[data-user-switch]");
   const users = getUsers();
   userSwitch.innerHTML = users.map((user) => `<option value="${user.id}">${user.name}</option>`).join("");
-  userSwitch.value = getCurrentUser().id;
   const currentUser = getCurrentUser();
+  userSwitch.value = currentUser.id;
   form.querySelector("[name='name']").value = currentUser.name;
   form.querySelector("[name='location']").value = currentUser.location;
   form.querySelector("[name='skills']").value = currentUser.skills.join(", ");
@@ -533,22 +554,92 @@ function bindAuth() {
   const form = qs("[data-auth-form]");
   const userSelect = qs("[data-auth-user]");
   const roleSelect = qs("[data-auth-role]");
+  const customNameInput = qs("[data-custom-name]");
+  const customLocationInput = qs("[data-custom-location]");
+  const demoModeDiv = qs("#demo-mode");
+  const customModeDiv = qs("#custom-mode");
+  const modeButtons = qsa(".auth-mode-btn");
+  
+  let currentMode = "demo";
+  
   const users = getUsers();
   userSelect.innerHTML = users.map((user) => `<option value="${user.id}">${user.name}</option>`).join("");
-  userSelect.value = getCurrentUser().id;
-  roleSelect.value = getCurrentUser().role;
+  const defaultUser = users[0];
+  userSelect.value = defaultUser?.id || "";
+  roleSelect.value = defaultUser?.role || "Both";
   userSelect.onchange = () => { roleSelect.value = users.find((item) => item.id === userSelect.value)?.role || "Both"; };
+  
+  // Toggle between demo and custom mode
+  modeButtons.forEach((btn) => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      currentMode = btn.dataset.mode;
+      modeButtons.forEach((b) => {
+        b.classList.remove("active");
+        b.style.color = "#999";
+        b.style.borderBottom = "none";
+      });
+      btn.classList.add("active");
+      btn.style.color = "#0f766e";
+      btn.style.borderBottom = "2px solid #0f766e";
+      
+      if (currentMode === "demo") {
+        demoModeDiv.style.display = "block";
+        customModeDiv.style.display = "none";
+      } else {
+        demoModeDiv.style.display = "none";
+        customModeDiv.style.display = "block";
+        customNameInput.focus();
+      }
+    };
+  });
+  
   form.onsubmit = (event) => {
     event.preventDefault();
-    const allUsers = getUsers();
-    const index = allUsers.findIndex((user) => user.id === userSelect.value);
-    if (index >= 0) {
-      allUsers[index].role = roleSelect.value;
+    
+    if (currentMode === "demo") {
+      // Demo user login
+      const allUsers = getUsers();
+      const index = allUsers.findIndex((user) => user.id === userSelect.value);
+      if (index >= 0) {
+        allUsers[index].role = roleSelect.value;
+        save(STORAGE_KEYS.users, allUsers);
+        setCurrentUser(userSelect.value);
+      }
+    } else {
+      // Custom user creation
+      const name = customNameInput.value.trim();
+      const location = customLocationInput.value.trim() || "Remote";
+      const role = roleSelect.value;
+      
+      if (!name) {
+        showToast("Please enter your name");
+        return;
+      }
+      
+      const allUsers = getUsers();
+      const customUser = {
+        id: makeId("user"),
+        name: name,
+        role: role,
+        location: location,
+        interests: [],
+        skills: [],
+        trustScore: 50,
+        badges: [],
+        contributions: 0
+      };
+      
+      allUsers.push(customUser);
       save(STORAGE_KEYS.users, allUsers);
-      setCurrentUser(userSelect.value);
+      setCurrentUser(customUser.id);
+      showToast(`Welcome ${name}! Redirecting to Create Request.`);
+      setTimeout(() => { window.location.href = "../createRequest/createRequest.html"; }, 600);
+      return;
     }
-    showToast("Authentication simulated. Redirecting to dashboard.");
-    setTimeout(() => { window.location.href = "dashboard.html"; }, 600);
+    
+    showToast("Authentication simulated. Redirecting to Create Request.");
+    setTimeout(() => { window.location.href = "../createRequest/createRequest.html"; }, 600);
   };
 }
 
